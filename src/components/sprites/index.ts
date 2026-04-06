@@ -1,0 +1,16 @@
+export { default as CeoSprite } from './CeoSprite';
+export { default as DevopsSprite } from './DevopsSprite';
+export { default as FullstackSprite } from './FullstackSprite';
+export { default as DesignerSprite } from './DesignerSprite';
+export { default as QaSprite } from './QaSprite';
+export { default as InternSprite } from './InternSprite';
+export { default as SupportSprite } from './SupportSprite';
+export { default as ProductManagerSprite } from './ProductManagerSprite';
+export { default as SalesSprite } from './SalesSprite';
+export { default as RecruiterSprite } from './RecruiterSprite';
+export { default as AlienSprite } from './AlienSprite';
+export { default as AlienBruteSprite } from './AlienBruteSprite';
+export { default as AlienStalkerSprite } from './AlienStalkerSprite';
+export { default as AlienDroneSprite } from './AlienDroneSprite';
+export { default as AlienSpitterSprite } from './AlienSpitterSprite';
+export { default as BossSprite } from './BossSprite';
