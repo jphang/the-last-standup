@@ -1,7 +1,7 @@
 import type { TriviaQuestion } from '../types/game';
 
-let csQuestions: TriviaQuestion[] = [];
-let mathQuestions: TriviaQuestion[] = [];
+const csQuestions: TriviaQuestion[] = [];
+const mathQuestions: TriviaQuestion[] = [];
 let csFetching = false;
 let mathFetching = false;
 
