@@ -3,6 +3,7 @@
 [![Open in Bolt](https://bolt.new/static/open-in-bolt.svg)](https://bolt.new/~/sb1-w4rh83wl)
 
 Something I built to get a feel of vibe coding.
+
 Technologies used: React, TypeScript, Vite, Tailwind CSS, Supabase, Stripe
 
 ## The Story: 
