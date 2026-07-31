@@ -49,7 +49,6 @@ export default function Avatar({ characterClass, size = 'md', isPremium = false,
   const monoSizes = { sm: 10, md: 14, lg: 22 };
   const stacheSizes = { sm: 14, md: 20, lg: 32 };
 
-  const isAlien = characterClass === 'boss' || characterClass in ALIEN_COLORS;
   const color = characterClass === 'boss'
     ? '#ef4444'
     : ALIEN_COLORS[characterClass as AlienSpriteKey] ?? CHARACTER_CLASSES[characterClass as CharacterClass]?.color ?? '#6b7280';
