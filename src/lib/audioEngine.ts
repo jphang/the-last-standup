@@ -115,9 +115,9 @@ function playLoop(
       if (timeoutId) clearTimeout(timeoutId);
       master.gain.cancelScheduledValues(ctx.currentTime);
       master.gain.setValueAtTime(0, ctx.currentTime);
-      activeOscs.forEach((o) => { try { o.stop(0); } catch {} });
+      activeOscs.forEach((o) => { try { o.stop(0); } catch(e) {console.debug("Caught exception")} });
       activeOscs.length = 0;
-      try { master.disconnect(); } catch {}
+      try { master.disconnect(); } catch(e) {console.debug("Caught exception")}
       activeTracks.delete(track);
     },
     isPlaying: () => !stopped,
