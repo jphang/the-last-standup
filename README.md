@@ -6,7 +6,7 @@ Something I built to get a feel of vibe coding.
 
 Technologies used: React, TypeScript, Vite, Tailwind CSS, Supabase, Stripe
 
-## The Story: 
+## Story
 A rogue former CTO named Dr. Marcus Pivot got tired of pivoting the company every sprint. He made contact with aliens and now commands their invasion from a modified standing desk using a Kanban board of doom.
 
 ## Characters
