@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { MusicProvider } from './context/MusicContext';
 import { GamePage } from './pages/GamePage';
 import { AuthPage } from './pages/AuthPage';
