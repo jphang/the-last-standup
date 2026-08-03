@@ -1,6 +1,6 @@
 import { LogOut, Crown, User, Zap, Volume2, VolumeX } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useMusic } from '../context/MusicContext';
+import { useAuth } from '../context/useAuth';
+import { useMusic } from '../context/useMusic';
 import type { GameScreen } from '../types/game';
 
 interface HeaderProps {
@@ -34,11 +34,10 @@ export default function Header({ currentScreen, onNavigate }: HeaderProps) {
           {!isPremium && (
             <button
               onClick={() => onNavigate('premium')}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 ${
-                currentScreen === 'premium'
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200 ${currentScreen === 'premium'
                   ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                   : 'bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20'
-              }`}
+                }`}
             >
               <Crown className="w-3.5 h-3.5" />
               Paying to Win
@@ -67,11 +66,10 @@ export default function Header({ currentScreen, onNavigate }: HeaderProps) {
           </div>
           <button
             onClick={toggleMute}
-            className={`p-2 rounded-lg transition-all ${
-              muted
+            className={`p-2 rounded-lg transition-all ${muted
                 ? 'text-slate-600 hover:text-slate-400 hover:bg-slate-800'
                 : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
-            }`}
+              }`}
             title={muted ? 'Unmute music' : 'Mute music'}
           >
             {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { KeyRound, ArrowRight, CheckCircle, Volume2, VolumeX } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useMusic } from '../context/MusicContext';
+import { useAuth } from '../context/useAuth';
+import { useMusic } from '../context/useMusic';
 
 export function ResetPasswordPage() {
   const { updatePassword, signOut } = useAuth();
@@ -120,11 +120,10 @@ export function ResetPasswordPage() {
 
       <button
         onClick={toggleMute}
-        className={`absolute top-6 right-6 p-2.5 rounded-lg border transition-all ${
-          muted
+        className={`absolute top-6 right-6 p-2.5 rounded-lg border transition-all ${muted
             ? 'text-slate-600 border-slate-800 hover:text-slate-400 hover:bg-slate-800/50'
             : 'text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10'
-        }`}
+          }`}
         title={muted ? 'Unmute music' : 'Mute music'}
       >
         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}

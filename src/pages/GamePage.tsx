@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useMusic } from '../context/MusicContext';
+import { useAuth } from '../context/useAuth';
+import { useMusic } from '../context/useMusic';
 import { verifyPremium } from '../lib/stripe';
 import type { PlayerCharacter, GameScreen } from '../types/game';
 import { SubscriptionStatus } from '../components/SubscriptionStatus';
@@ -88,7 +88,7 @@ export function GamePage() {
       <div className="mb-6">
         <SubscriptionStatus />
       </div>
-      
+
       <Header currentScreen={screen} onNavigate={handleNavigate} />
       {screen === 'dashboard' && (
         <Dashboard

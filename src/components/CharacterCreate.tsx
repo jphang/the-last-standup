@@ -4,7 +4,7 @@ import type { CharacterClass } from '../types/game';
 import { CHARACTER_CLASSES } from '../types/game';
 import { CLASS_GROWTHS } from '../lib/gameLogic';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import Avatar from './Avatar';
 
 interface CharacterCreateProps {
@@ -75,18 +75,17 @@ export default function CharacterCreate({ onBack, onCreated }: CharacterCreatePr
                 <button
                   key={key}
                   onClick={() => setSelectedClass(key)}
-                  className={`relative p-4 rounded-2xl border-2 transition-all duration-200 text-left ${
-                    isSelected
+                  className={`relative p-4 rounded-2xl border-2 transition-all duration-200 text-left ${isSelected
                       ? 'border-opacity-60 bg-opacity-20 scale-[1.02] shadow-lg'
                       : 'border-slate-800 bg-slate-900/30 hover:bg-slate-800/50 hover:border-slate-700'
-                  }`}
+                    }`}
                   style={
                     isSelected
                       ? {
-                          borderColor: `${info.color}60`,
-                          backgroundColor: `${info.color}15`,
-                          boxShadow: `0 0 30px ${info.color}10`,
-                        }
+                        borderColor: `${info.color}60`,
+                        backgroundColor: `${info.color}15`,
+                        boxShadow: `0 0 30px ${info.color}10`,
+                      }
                       : {}
                   }
                 >
@@ -181,9 +180,8 @@ export default function CharacterCreate({ onBack, onCreated }: CharacterCreatePr
                   if (e.target.value.trim()) setShowNameError(false);
                 }}
                 maxLength={30}
-                className={`flex-1 bg-slate-900/80 text-white placeholder-slate-600 border rounded-xl py-3 px-4 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all ${
-                  showNameError ? 'border-red-500/60' : 'border-slate-700/50'
-                }`}
+                className={`flex-1 bg-slate-900/80 text-white placeholder-slate-600 border rounded-xl py-3 px-4 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all ${showNameError ? 'border-red-500/60' : 'border-slate-700/50'
+                  }`}
               />
               <button
                 onClick={handleCreate}

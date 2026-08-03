@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Skull, Users, Crown, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import type { PlayerCharacter, GameScreen } from '../types/game';
 import CharacterCard from './CharacterCard';
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { createContext, useState, useCallback, useRef, useEffect } from 'react';
 import type { MusicTrack } from '../lib/audioEngine';
 import {
   resumeAudio,
@@ -30,12 +30,12 @@ interface MusicContextValue {
   toggleMute: () => void;
 }
 
-const MusicContext = createContext<MusicContextValue>({
+export const MusicContext = createContext<MusicContextValue>({
   currentTrack: null,
   muted: false,
-  play: () => {},
-  stop: () => {},
-  toggleMute: () => {},
+  play: () => { },
+  stop: () => { },
+  toggleMute: () => { },
 });
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
@@ -101,6 +101,3 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useMusic() {
-  return useContext(MusicContext);
-}

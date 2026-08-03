@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Crown, Zap, Shield, Heart, Check, Sparkles, XCircle, RotateCcw, AlertTriangle } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { startCheckout, cancelSubscription, reactivateSubscription } from '../lib/stripe';
 import Avatar from './Avatar';
 

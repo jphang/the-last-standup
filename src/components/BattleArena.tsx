@@ -1,12 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 import { Swords, Zap, Shield, ArrowLeft, Trophy, Skull as SkullIcon, Star, TrendingUp, Heart, Bot } from 'lucide-react';
-import type { PlayerCharacter, CharacterClass, BattleState, BattlePhase } from '../types/game';
-import { CHARACTER_CLASSES } from '../types/game';
-import { generateEnemy, isBossEligible } from '../lib/enemies';
-import { calculateDamage, calculateExpGain, processLevelUp, getEffectiveStats } from '../lib/gameLogic';
-import { getCSQuestion, getMathQuestion, prefetchQuestions } from '../lib/trivia';
-import { supabase } from '../lib/supabase';
-import { useMusic } from '../context/MusicContext';
+import type { PlayerCharacter, CharacterClass } from '../types/game';
+import { isBossEligible } from '../lib/enemies';
+import { useBattleFlow } from '../hooks/useBattleFlow';
 import Avatar from './Avatar';
 import HealthBar from './HealthBar';
 import TriviaModal from './TriviaModal';
@@ -20,288 +15,25 @@ interface BattleArenaProps {
 }
 
 export default function BattleArena({ character, isPremium, onExit }: BattleArenaProps) {
-  const { play } = useMusic();
-  const [localChar, setLocalChar] = useState<PlayerCharacter>({ ...character });
-  const stats = getEffectiveStats(localChar, isPremium);
-  const [battle, setBattle] = useState<BattleState | null>(null);
-  const [showTrivia, setShowTrivia] = useState(false);
-  const [animating, setAnimating] = useState(false);
-  const [levelUpInfo, setLevelUpInfo] = useState<{
-    levelsGained: number;
-    hpGain: number;
-    attackGain: number;
-    defenseGain: number;
-  } | null>(null);
-  const [isBossFight, setIsBossFight] = useState(false);
-  const [autopilot, setAutopilot] = useState(false);
-  const logRef = useRef<HTMLDivElement>(null);
-
-  const localCharRef = useRef(localChar);
-  localCharRef.current = localChar;
-
-  const startBattle = useCallback((boss: boolean) => {
-    const current = localCharRef.current;
-    const currentStats = getEffectiveStats(current, isPremium);
-    const enemy = generateEnemy(current.level, boss);
-    setBattle({
-      playerHp: currentStats.hp,
-      playerMaxHp: currentStats.hp,
-      enemy,
-      phase: 'player_choose',
-      currentQuestion: null,
-      battleLog: [
-        `${enemy.name} appears!`,
-        `"${enemy.description}"`,
-      ],
-      expGained: 0,
-      lastDamage: null,
-    });
-    setIsBossFight(boss);
-    setLevelUpInfo(null);
-    prefetchQuestions();
-    play(boss ? 'battle_boss' : 'battle_alien');
-  }, [isPremium, play]);
-
-  const [choosing, setChoosing] = useState(() => isBossEligible(character.level));
-  const [showBossVictory, setShowBossVictory] = useState(false);
-
-  const beginBattle = useCallback((boss: boolean) => {
-    setChoosing(false);
-    setShowBossVictory(false);
-    startBattle(boss);
-  }, [startBattle]);
-
-  useEffect(() => {
-    if (!isBossEligible(character.level)) {
-      startBattle(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  }, [battle?.battleLog]);
-
-  useEffect(() => {
-    if (!autopilot || !battle || animating) return;
-    if (battle.phase === 'player_choose') {
-      const t = setTimeout(() => handleAttack(), 600);
-      return () => clearTimeout(t);
-    }
-    if (battle.phase === 'enemy_incoming') {
-      const t = setTimeout(() => handleDefend(), 600);
-      return () => clearTimeout(t);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autopilot, battle?.phase, animating]);
-
-  const addLog = (msg: string) => {
-    setBattle((prev) => prev ? { ...prev, battleLog: [...prev.battleLog, msg] } : null);
-  };
-
-  const setPhase = (phase: BattlePhase) => {
-    setBattle((prev) => prev ? { ...prev, phase } : null);
-  };
-
-  const handleAttack = async () => {
-    if (!battle || animating) return;
-
-    if (autopilot) {
-      executePlayerAttack(1);
-      return;
-    }
-
-    const q = await getCSQuestion();
-    if (q) {
-      setBattle((prev) => prev ? { ...prev, currentQuestion: q, phase: 'trivia_attack' } : null);
-      setShowTrivia(true);
-      return;
-    }
-    addLog('No trivia available -- attacking normally.');
-    executePlayerAttack(1);
-  };
-
-  const executePlayerAttack = (multiplier: number) => {
-    if (!battle) return;
-    setAnimating(true);
-    setShowTrivia(false);
-
-    const dmg = calculateDamage(stats.attack, battle.enemy.defense, multiplier);
-    const newEnemyHp = Math.max(0, battle.enemy.hp - dmg);
-
-    const label = multiplier > 1 ? 'CRITICAL Knowledge Strike' : 'Attack';
-    addLog(`You use ${label}! ${dmg} damage to ${battle.enemy.name}!`);
-
-    setBattle((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        enemy: { ...prev.enemy, hp: newEnemyHp },
-        lastDamage: { target: 'enemy', amount: dmg },
-        phase: newEnemyHp <= 0 ? 'battle_won' : 'enemy_incoming',
-      };
-    });
-
-    if (newEnemyHp <= 0) {
-      handleVictory();
-    } else {
-      setTimeout(() => {
-        setAnimating(false);
-        setPhase('enemy_incoming');
-      }, 800);
-    }
-  };
-
-  const handleDefend = async () => {
-    if (!battle || animating) return;
-
-    if (autopilot) {
-      executeEnemyAttack(1);
-      return;
-    }
-
-    const q = await getMathQuestion();
-    if (q) {
-      setBattle((prev) => prev ? { ...prev, currentQuestion: q, phase: 'trivia_defend' } : null);
-      setShowTrivia(true);
-      return;
-    }
-    addLog('No trivia available -- bracing normally.');
-    executeEnemyAttack(1);
-  };
-
-  const executeEnemyAttack = (damageMultiplier: number) => {
-    if (!battle) return;
-    setAnimating(true);
-    setShowTrivia(false);
-
-    const dmg = calculateDamage(battle.enemy.attack, stats.defense, damageMultiplier);
-    const newPlayerHp = Math.max(0, battle.playerHp - dmg);
-
-    const label = damageMultiplier < 1 ? 'Brain Shield absorbs the blow' : `${battle.enemy.name} attacks`;
-    addLog(`${label}! ${dmg} damage to you!`);
-
-    setBattle((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        playerHp: newPlayerHp,
-        lastDamage: { target: 'player', amount: dmg },
-        phase: newPlayerHp <= 0 ? 'battle_lost' : 'player_choose',
-      };
-    });
-
-    if (newPlayerHp <= 0) {
-      handleDefeat();
-    }
-
-    setTimeout(() => setAnimating(false), 800);
-  };
-
-  const handleTriviaAnswer = (correct: boolean) => {
-    if (!battle) return;
-    if (battle.phase === 'trivia_attack') {
-      if (correct) {
-        addLog('Correct! Double damage incoming!');
-        executePlayerAttack(2);
-      } else {
-        addLog('Wrong answer. Normal attack.');
-        executePlayerAttack(1);
-      }
-    } else if (battle.phase === 'trivia_defend') {
-      if (correct) {
-        addLog('Correct! Damage halved!');
-        executeEnemyAttack(0.5);
-      } else {
-        addLog('Wrong answer. Full damage incoming.');
-        executeEnemyAttack(1);
-      }
-    }
-  };
-
-  const handleTriviaTimeout = () => {
-    if (!battle) return;
-    addLog('Time\'s up! Normal damage.');
-    if (battle.phase === 'trivia_attack') {
-      executePlayerAttack(1);
-    } else {
-      executeEnemyAttack(1);
-    }
-  };
-
-  const handleVictory = async () => {
-    if (!battle) return;
-    play('victory');
-    const exp = calculateExpGain(localChar.level, battle.enemy.level, battle.enemy.isBoss);
-    const result = processLevelUp(localChar, exp);
-
-    addLog(`Victory! Gained ${exp} EXP!`);
-    if (result.levelsGained > 0) {
-      addLog(`LEVEL UP! Now level ${result.newLevel}!`);
-      setLevelUpInfo({
-        levelsGained: result.levelsGained,
-        hpGain: result.hpGain,
-        attackGain: result.attackGain,
-        defenseGain: result.defenseGain,
-      });
-    }
-
-    setBattle((prev) => prev ? { ...prev, expGained: exp } : null);
-
-    if (battle.enemy.isBoss) {
-      setShowBossVictory(true);
-    }
-
-    const updatedChar: PlayerCharacter = {
-      ...localChar,
-      level: result.newLevel,
-      exp: result.newExp,
-      max_hp: localChar.max_hp + result.hpGain,
-      current_hp: localChar.max_hp + result.hpGain,
-      attack: localChar.attack + result.attackGain,
-      defense: localChar.defense + result.defenseGain,
-      battles_won: localChar.battles_won + 1,
-      boss_defeats: localChar.boss_defeats + (battle.enemy.isBoss ? 1 : 0),
-    };
-    setLocalChar(updatedChar);
-
-    await supabase
-      .from('player_characters')
-      .update({
-        level: updatedChar.level,
-        exp: updatedChar.exp,
-        max_hp: updatedChar.max_hp,
-        current_hp: updatedChar.current_hp,
-        attack: updatedChar.attack,
-        defense: updatedChar.defense,
-        battles_won: updatedChar.battles_won,
-        boss_defeats: updatedChar.boss_defeats,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', localChar.id);
-
-    setAnimating(false);
-  };
-
-  const handleDefeat = async () => {
-    play('defeat');
-    addLog('You have been defeated...');
-    const updatedChar = { ...localChar, battles_lost: localChar.battles_lost + 1 };
-    setLocalChar(updatedChar);
-
-    await supabase
-      .from('player_characters')
-      .update({
-        battles_lost: updatedChar.battles_lost,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', localChar.id);
-    setAnimating(false);
-  };
-
-  const classInfo = CHARACTER_CLASSES[localChar.character_key as CharacterClass];
+  const {
+    localChar,
+    stats,
+    battle,
+    showTrivia,
+    levelUpInfo,
+    isBossFight,
+    autopilot,
+    choosing,
+    showBossVictory,
+    logRef,
+    classInfo,
+    beginBattle,
+    handleAttack,
+    handleDefend,
+    handleTriviaAnswer,
+    handleTriviaTimeout,
+    setAutopilot,
+  } = useBattleFlow({ character, isPremium });
 
   if (showBossVictory && battle) {
     return (
@@ -405,11 +137,10 @@ export default function BattleArena({ character, isPremium, onExit }: BattleAren
         </button>
         <button
           onClick={() => setAutopilot((p) => !p)}
-          className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all ${
-            autopilot
-              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
-              : 'bg-slate-800/50 border-slate-700/50 text-slate-500 hover:text-slate-300 hover:border-slate-600'
-          }`}
+          className={`flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all ${autopilot
+            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+            : 'bg-slate-800/50 border-slate-700/50 text-slate-500 hover:text-slate-300 hover:border-slate-600'
+            }`}
         >
           <Bot className="w-3.5 h-3.5" />
           Autopilot {autopilot ? 'ON' : 'OFF'}
@@ -463,17 +194,16 @@ export default function BattleArena({ character, isPremium, onExit }: BattleAren
           {battle.battleLog.map((msg, i) => (
             <p
               key={i}
-              className={`text-xs leading-relaxed ${
-                msg.startsWith('Victory') || msg.startsWith('LEVEL')
-                  ? 'text-emerald-400 font-semibold'
-                  : msg.startsWith('Correct')
+              className={`text-xs leading-relaxed ${msg.startsWith('Victory') || msg.startsWith('LEVEL')
+                ? 'text-emerald-400 font-semibold'
+                : msg.startsWith('Correct')
                   ? 'text-cyan-400'
                   : msg.startsWith('Wrong') || msg.startsWith('You have been')
-                  ? 'text-red-400'
-                  : msg.startsWith('"')
-                  ? 'text-slate-600 italic'
-                  : 'text-slate-400'
-              }`}
+                    ? 'text-red-400'
+                    : msg.startsWith('"')
+                      ? 'text-slate-600 italic'
+                      : 'text-slate-400'
+                }`}
             >
               {msg}
             </p>

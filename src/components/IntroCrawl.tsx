@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SkipForward, Volume2, VolumeX } from 'lucide-react';
-import { useMusic } from '../context/MusicContext';
+import { useMusic } from '../context/useMusic';
 
 interface IntroCrawlProps {
   onComplete: () => void;
@@ -37,9 +37,8 @@ export default function IntroCrawl({ onComplete }: IntroCrawlProps) {
 
   return (
     <div
-      className={`fixed inset-0 bg-black z-[100] overflow-hidden transition-opacity duration-700 ${
-        fadeOut ? 'opacity-0' : 'opacity-100'
-      }`}
+      className={`fixed inset-0 bg-black z-[100] overflow-hidden transition-opacity duration-700 ${fadeOut ? 'opacity-0' : 'opacity-100'
+        }`}
     >
       <div className="star-field" />
 
@@ -122,11 +121,10 @@ export default function IntroCrawl({ onComplete }: IntroCrawlProps) {
       <div className="absolute bottom-8 right-8 z-[110] flex items-center gap-3">
         <button
           onClick={toggleMute}
-          className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-300 ${
-            muted
+          className={`p-2.5 rounded-lg border backdrop-blur-sm transition-all duration-300 ${muted
               ? 'text-slate-600 border-white/10 hover:text-slate-400 hover:bg-white/5'
               : 'text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10'
-          }`}
+            }`}
           title={muted ? 'Unmute music' : 'Mute music'}
         >
           {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}

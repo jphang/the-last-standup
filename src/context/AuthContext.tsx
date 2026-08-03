@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types/game';
@@ -17,7 +17,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s) {
         const { data: { user: validatedUser }, error } = await supabase.auth.getUser();
         if (error || !validatedUser) {
-          await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+          await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -140,8 +140,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-}
