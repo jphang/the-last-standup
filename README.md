@@ -1,10 +1,8 @@
 ### The Last Standup
 
-[![Open in Bolt](https://bolt.new/static/open-in-bolt.svg)](https://bolt.new/~/sb1-w4rh83wl)
-
 Something I built to get a feel of vibe coding.
 
-Technologies used: React, TypeScript, Vite, Tailwind CSS, Supabase, Stripe
+Technologies used: Bolt.new (initially), React, TypeScript, Vite, Tailwind CSS, Supabase, Stripe
 
 ## Story
 A rogue former CTO named Dr. Marcus Pivot got tired of pivoting the company every sprint. He made contact with aliens and now commands their invasion from a modified standing desk using a Kanban board of doom.
