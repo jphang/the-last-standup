@@ -167,7 +167,7 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
         log({
             type: 'battle.defeat',
-            level: 'warn',
+            level: 'info',
             ts: new Date().toISOString(),
             userId: localChar.user_id,
             data: { enemyName: battle.enemy.name, isBoss: battle.enemy.isBoss },

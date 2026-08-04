@@ -6,6 +6,7 @@ import { configureLogger, consoleTransport, createRemoteTransport } from './lib/
 
 if (import.meta.env.DEV) {
   configureLogger({
+    level: 'debug',
     transports: [
       consoleTransport,
       createRemoteTransport({

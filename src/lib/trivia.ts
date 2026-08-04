@@ -46,15 +46,15 @@ async function fetchQuestions(category: number): Promise<TriviaQuestion[]> {
       type: 'trivia.error',
       level: 'warn',
       ts: new Date().toISOString(),
-      data: { category: label, count: 0 },
+      data: { category: label, count: 0, responseCode: data.response_code },
     });
     return [];
-  } catch {
+  } catch (error) {
     log({
       type: 'trivia.error',
       level: 'warn',
       ts: new Date().toISOString(),
-      data: { category: label, count: 0 },
+      data: { category: label, count: 0, reason: error instanceof Error ? error.message : String(error) },
     });
     return [];
   }

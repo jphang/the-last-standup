@@ -39,7 +39,7 @@ export default function Dashboard({ onNavigate, onSelectCharacter, onEditCharact
     await supabase.from('player_characters').delete().eq('id', id);
     log({
       type: 'character.delete',
-      level: 'warn',
+      level: 'info',
       ts: new Date().toISOString(),
       userId: user?.id,
       data: { characterId: id },

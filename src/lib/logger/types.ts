@@ -82,7 +82,7 @@ export interface TriviaEvent {
   level: LogLevel;
   ts: string;
   userId?: string;
-  data: { category: 'cs' | 'math'; count: number };
+  data: { category: 'cs' | 'math'; count: number; responseCode?: number; reason?: string };
 }
 
 export type LogEvent =
