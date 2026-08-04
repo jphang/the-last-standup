@@ -7,6 +7,7 @@ import { getCSQuestion, getMathQuestion, prefetchQuestions } from '../lib/trivia
 import { supabase } from '../lib/supabase';
 import { useMusic } from '../context/useMusic';
 import { applyEnemyAttack, applyPlayerAttack, createBattleState } from '../lib/battleEngine';
+import { log } from '../lib/logger';
 
 interface UseBattleFlowOptions {
     character: PlayerCharacter;
@@ -62,6 +63,19 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         setLevelUpInfo(null);
         prefetchQuestions();
         play(boss ? 'battle_boss' : 'battle_alien');
+
+        log({
+            type: 'battle.start',
+            level: 'info',
+            ts: new Date().toISOString(),
+            userId: current.user_id,
+            data: {
+                characterId: current.id,
+                enemyName: nextBattle.enemy.name,
+                isBoss: boss,
+                playerLevel: current.level,
+            },
+        });
     }, [isPremium, play]);
 
     const beginBattle = useCallback((boss: boolean) => {
@@ -77,8 +91,27 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         const exp = calculateExpGain(localChar.level, battle.enemy.level, battle.enemy.isBoss);
         const result = processLevelUp(localChar, exp);
 
+        log({
+            type: 'battle.victory',
+            level: 'info',
+            ts: new Date().toISOString(),
+            userId: localChar.user_id,
+            data: { enemyName: battle.enemy.name, isBoss: battle.enemy.isBoss, expGained: exp },
+        });
+
         addLog(`Victory! Gained ${exp} EXP!`);
         if (result.levelsGained > 0) {
+            log({
+                type: 'battle.level_up',
+                level: 'info',
+                ts: new Date().toISOString(),
+                userId: localChar.user_id,
+                data: {
+                    characterId: localChar.id,
+                    newLevel: result.newLevel,
+                    levelsGained: result.levelsGained,
+                },
+            });
             addLog(`LEVEL UP! Now level ${result.newLevel}!`);
             setLevelUpInfo({
                 levelsGained: result.levelsGained,
@@ -132,6 +165,14 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         play('defeat');
         addLog('You have been defeated...');
 
+        log({
+            type: 'battle.defeat',
+            level: 'warn',
+            ts: new Date().toISOString(),
+            userId: localChar.user_id,
+            data: { enemyName: battle.enemy.name, isBoss: battle.enemy.isBoss },
+        });
+
         const updatedChar = { ...localChar, battles_lost: localChar.battles_lost + 1 };
         setLocalChar(updatedChar);
 
@@ -155,6 +196,14 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         const nextBattle = applyPlayerAttack(battle, stats.attack, battle.enemy.defense, multiplier);
         const dmg = nextBattle.lastDamage?.amount ?? 0;
         const label = multiplier > 1 ? 'CRITICAL Knowledge Strike' : 'Attack';
+
+        log({
+            type: 'battle.player_attack',
+            level: 'debug',
+            ts: new Date().toISOString(),
+            userId: localCharRef.current.user_id,
+            data: { damage: dmg, targetHp: nextBattle.enemy.hp },
+        });
 
         addLog(`You use ${label}! ${dmg} damage to ${battle.enemy.name}!`);
 
@@ -180,6 +229,14 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         const nextBattle = applyEnemyAttack(battle, battle.enemy.attack, stats.defense, damageMultiplier);
         const dmg = nextBattle.lastDamage?.amount ?? 0;
         const label = damageMultiplier < 1 ? 'Brain Shield absorbs the blow' : `${battle.enemy.name} attacks`;
+
+        log({
+            type: 'battle.enemy_attack',
+            level: 'debug',
+            ts: new Date().toISOString(),
+            userId: localCharRef.current.user_id,
+            data: { damage: dmg, targetHp: nextBattle.playerHp },
+        });
 
         addLog(`${label}! ${dmg} damage to you!`);
 

@@ -4,6 +4,7 @@ import type { PlayerCharacter, CharacterClass } from '../types/game';
 import { CHARACTER_CLASSES } from '../types/game';
 import { CLASS_GROWTHS } from '../lib/gameLogic';
 import { supabase } from '../lib/supabase';
+import { log } from '../lib/logger';
 import Avatar from './Avatar';
 
 interface CharacterEditProps {
@@ -54,6 +55,12 @@ export default function CharacterEdit({ character, isPremium, onBack, onSaved }:
       setError(err.message);
       setSaving(false);
     } else {
+      log({
+        type: 'character.rename',
+        level: 'info',
+        ts: new Date().toISOString(),
+        data: { characterId: character.id, name: name.trim() },
+      });
       onSaved();
     }
   };

@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { log } from '../lib/logger';
 import type { Profile } from '../types/game';
 
 interface AuthContextType {
@@ -81,16 +82,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      log({
+        type: 'auth.login.failure',
+        level: 'warn',
+        ts: new Date().toISOString(),
+        data: { method: 'email', message: error.message },
+      });
+    } else {
+      log({
+        type: 'auth.login.success',
+        level: 'info',
+        ts: new Date().toISOString(),
+        userId: data.session?.user.id,
+        data: { method: 'email' },
+      });
+    }
     return { error: error?.message ?? null };
   };
 
   const signUpWithEmail = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: name } },
     });
+    if (!error) {
+      log({
+        type: 'auth.signup',
+        level: 'info',
+        ts: new Date().toISOString(),
+        userId: data.user?.id,
+        data: { method: 'email', name },
+      });
+    }
     return { error: error?.message ?? null };
   };
 
@@ -107,6 +133,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    log({
+      type: 'auth.logout',
+      level: 'info',
+      ts: new Date().toISOString(),
+      userId: user?.id,
+      data: {},
+    });
     setProfile(null);
     setUser(null);
     setSession(null);

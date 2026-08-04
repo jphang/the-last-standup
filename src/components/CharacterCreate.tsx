@@ -4,6 +4,7 @@ import type { CharacterClass } from '../types/game';
 import { CHARACTER_CLASSES } from '../types/game';
 import { CLASS_GROWTHS } from '../lib/gameLogic';
 import { supabase } from '../lib/supabase';
+import { log } from '../lib/logger';
 import { useAuth } from '../context/useAuth';
 import Avatar from './Avatar';
 
@@ -34,20 +35,31 @@ export default function CharacterCreate({ onBack, onCreated }: CharacterCreatePr
     setError('');
     setShowNameError(false);
 
-    const { error: err } = await supabase.from('player_characters').insert({
-      user_id: user.id,
-      name: name.trim(),
-      character_key: selectedClass,
-      max_hp: classInfo.baseHp,
-      current_hp: classInfo.baseHp,
-      attack: classInfo.baseAttack,
-      defense: classInfo.baseDefense,
-    });
+    const { data: inserted, error: err } = await supabase
+      .from('player_characters')
+      .insert({
+        user_id: user.id,
+        name: name.trim(),
+        character_key: selectedClass,
+        max_hp: classInfo.baseHp,
+        current_hp: classInfo.baseHp,
+        attack: classInfo.baseAttack,
+        defense: classInfo.baseDefense,
+      })
+      .select('id')
+      .single();
 
     if (err) {
       setError(err.message);
       setCreating(false);
     } else {
+      log({
+        type: 'character.create',
+        level: 'info',
+        ts: new Date().toISOString(),
+        userId: user.id,
+        data: { characterId: inserted?.id ?? 'unknown', name: name.trim() },
+      });
       onCreated();
     }
   };

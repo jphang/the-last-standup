@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Skull, Users, Crown, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { log } from '../lib/logger';
 import { useAuth } from '../context/useAuth';
 import type { PlayerCharacter, GameScreen } from '../types/game';
 import CharacterCard from './CharacterCard';
@@ -36,6 +37,13 @@ export default function Dashboard({ onNavigate, onSelectCharacter, onEditCharact
 
   const handleDelete = async (id: string) => {
     await supabase.from('player_characters').delete().eq('id', id);
+    log({
+      type: 'character.delete',
+      level: 'warn',
+      ts: new Date().toISOString(),
+      userId: user?.id,
+      data: { characterId: id },
+    });
     setDeleteTarget(null);
     fetchCharacters();
   };

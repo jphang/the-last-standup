@@ -1,9 +1,14 @@
 import type { TriviaQuestion } from '../types/game';
+import { log } from './logger';
 
 const csQuestions: TriviaQuestion[] = [];
 const mathQuestions: TriviaQuestion[] = [];
 let csFetching = false;
 let mathFetching = false;
+
+function categoryLabel(category: number): 'cs' | 'math' {
+  return category === 18 ? 'cs' : 'math';
+}
 
 function decodeHtml(html: string): string {
   const textarea = document.createElement('textarea');
@@ -22,16 +27,35 @@ function decodeQuestion(raw: TriviaQuestion): TriviaQuestion {
 }
 
 async function fetchQuestions(category: number): Promise<TriviaQuestion[]> {
+  const label = categoryLabel(category);
   try {
     const res = await fetch(
       `https://opentdb.com/api.php?amount=50&category=${category}&type=multiple`
     );
     const data = await res.json();
     if (data.response_code === 0 && data.results) {
+      log({
+        type: 'trivia.fetch',
+        level: 'info',
+        ts: new Date().toISOString(),
+        data: { category: label, count: data.results.length },
+      });
       return data.results.map(decodeQuestion);
     }
+    log({
+      type: 'trivia.error',
+      level: 'warn',
+      ts: new Date().toISOString(),
+      data: { category: label, count: 0 },
+    });
     return [];
   } catch {
+    log({
+      type: 'trivia.error',
+      level: 'warn',
+      ts: new Date().toISOString(),
+      data: { category: label, count: 0 },
+    });
     return [];
   }
 }
