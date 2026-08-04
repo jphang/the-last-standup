@@ -39,19 +39,37 @@ function readLines(file: string): string[] {
 }
 
 describe('createFileTransport', () => {
-  it('appends JSON lines to the active log file', () => {
+  it('writes human-readable lines to the active log file by default', () => {
     const transport = createFileTransport({ directory: dir, maxBytes: 1024 * 1024, maxFiles: 5 });
 
     transport.write(makeEvent(1));
     transport.write(makeEvent(2));
 
     expect(listLogFiles()).toEqual(['app.log']);
-    expect(readLines('app.log')).toHaveLength(2);
-    expect(JSON.parse(readLines('app.log')[0]).type).toBe('battle.start');
+    const lines = readLines('app.log');
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toMatch(/^\d{4}-\d{2}-\d{2}T.*INFO.*\[user-1\].*battle\.start/);
+    expect(lines[0]).toContain('enemyName="Bugzoid Grunt"');
+    expect(lines[0]).toContain('isBoss=false');
+  });
+
+  it('writes raw JSON lines when format is set to json', () => {
+    const transport = createFileTransport({
+      directory: dir,
+      maxBytes: 1024 * 1024,
+      maxFiles: 5,
+      format: 'json',
+    });
+
+    transport.write(makeEvent(1));
+
+    const [line] = readLines('app.log');
+    expect(JSON.parse(line).type).toBe('battle.start');
+    expect(JSON.parse(line).userId).toBe('user-1');
   });
 
   it('rotates the active file once it fills up', () => {
-    const transport = createFileTransport({ directory: dir, maxBytes: 100, maxFiles: 5 });
+    const transport = createFileTransport({ directory: dir, maxBytes: 100, maxFiles: 5, format: 'json' });
 
     for (let i = 0; i < 4; i++) transport.write(makeEvent(i));
 
@@ -62,7 +80,7 @@ describe('createFileTransport', () => {
   });
 
   it('caps the number of rotated files', () => {
-    const transport = createFileTransport({ directory: dir, maxBytes: 50, maxFiles: 3 });
+    const transport = createFileTransport({ directory: dir, maxBytes: 50, maxFiles: 3, format: 'json' });
 
     for (let i = 0; i < 20; i++) transport.write(makeEvent(i));
 
@@ -76,7 +94,7 @@ describe('createFileTransport', () => {
   });
 
   it('cleans up any files beyond the cap on rotation', () => {
-    const transport = createFileTransport({ directory: dir, maxBytes: 50, maxFiles: 2 });
+    const transport = createFileTransport({ directory: dir, maxBytes: 50, maxFiles: 2, format: 'json' });
     fs.writeFileSync(path.join(dir, 'app.9.log'), 'stale\n');
 
     for (let i = 0; i < 10; i++) transport.write(makeEvent(i));

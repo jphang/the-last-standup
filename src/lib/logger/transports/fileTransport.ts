@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { LogEvent, LogTransport } from '../types';
 import { activeLogPath, planRotation, shouldRotate } from '../rotation';
+import { formatEvent, type LogFormat } from '../formats';
 
 const IS_NODE = typeof process !== 'undefined' && Boolean(process.versions?.node);
 
@@ -10,6 +11,7 @@ export interface FileTransportOptions {
   baseName?: string;
   maxBytes?: number;
   maxFiles?: number;
+  format?: LogFormat;
 }
 
 export function createFileTransport(options: FileTransportOptions = {}): LogTransport {
@@ -17,6 +19,7 @@ export function createFileTransport(options: FileTransportOptions = {}): LogTran
   const baseName = options.baseName ?? 'app';
   const maxBytes = options.maxBytes ?? 1024 * 1024;
   const maxFiles = options.maxFiles ?? 5;
+  const format: LogFormat = options.format ?? 'pretty';
 
   return {
     name: 'file',
@@ -24,7 +27,7 @@ export function createFileTransport(options: FileTransportOptions = {}): LogTran
       if (!IS_NODE) return;
       try {
         fs.mkdirSync(directory, { recursive: true });
-        const line = `${JSON.stringify(event)}\n`;
+        const line = `${formatEvent(event, format)}\n`;
         const active = path.join(directory, activeLogPath(baseName));
         const currentSize = fs.existsSync(active) ? fs.statSync(active).size : 0;
 

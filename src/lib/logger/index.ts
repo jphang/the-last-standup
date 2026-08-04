@@ -9,7 +9,8 @@ export type {
   LogTransport,
   LoggerConfig,
 } from './types';
-export { serializeEvent, shouldLog, toIsoTimestamp } from './formats';
+export { formatEvent, formatEventHumanReadable, serializeEvent, shouldLog, toIsoTimestamp } from './formats';
+export type { LogFormat } from './formats';
 export { activeLogPath, indexedLogPath, planRotation, shouldRotate } from './rotation';
 export type { RotationOp, RotationPlanOptions } from './rotation';
 export { consoleTransport } from './transports/consoleTransport';

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { serializeEvent, shouldLog, toIsoTimestamp } from '../../src/lib/logger/formats';
+import {
+  formatEvent,
+  formatEventHumanReadable,
+  serializeEvent,
+  shouldLog,
+  toIsoTimestamp,
+} from '../../src/lib/logger/formats';
 
 describe('toIsoTimestamp', () => {
   it('formats dates as ISO strings', () => {
@@ -41,5 +47,77 @@ describe('serializeEvent', () => {
     const line = serializeEvent(event);
     expect(line).toContain('Invalid \\"credentials\\"');
     expect(JSON.parse(line).data.message).toBe('Invalid "credentials" — try again');
+  });
+});
+
+describe('formatEventHumanReadable', () => {
+  it('puts the timestamp on the left, then level, context, type, and data', () => {
+    const event = {
+      type: 'battle.victory' as const,
+      level: 'info' as const,
+      ts: '2026-01-01T00:00:00.000Z',
+      userId: 'user-1',
+      data: { enemyName: 'Bugzoid Grunt', isBoss: false, expGained: 18 },
+    };
+
+    expect(formatEventHumanReadable(event)).toBe(
+      '2026-01-01T00:00:00.000Z INFO  [user-1] battle.victory enemyName="Bugzoid Grunt" isBoss=false expGained=18'
+    );
+  });
+
+  it('quotes logfmt values that contain spaces or special characters', () => {
+    const event = {
+      type: 'auth.login.failure' as const,
+      level: 'warn' as const,
+      ts: '2026-01-01T00:00:00.000Z',
+      data: { method: 'email' as const, message: 'Invalid "credentials" — try again' },
+    };
+
+    const line = formatEventHumanReadable(event);
+    expect(line).toContain('message="Invalid \\"credentials\\" — try again"');
+    expect(line).toContain('method=email');
+  });
+
+  it('omits the userId and empty data sections when absent', () => {
+    const event = {
+      type: 'auth.logout' as const,
+      level: 'info' as const,
+      ts: '2026-01-01T00:00:00.000Z',
+      data: {},
+    };
+
+    expect(formatEventHumanReadable(event)).toBe('2026-01-01T00:00:00.000Z INFO  auth.logout');
+  });
+
+  it('formats warn and error levels with consistent padding', () => {
+    const warn = {
+      type: 'battle.defeat' as const,
+      level: 'warn' as const,
+      ts: '2026-01-01T00:00:00.000Z',
+      data: { enemyName: 'Bugzoid Grunt', isBoss: false },
+    };
+    const error = {
+      type: 'trivia.error' as const,
+      level: 'error' as const,
+      ts: '2026-01-01T00:00:00.000Z',
+      data: { category: 'cs' as const, count: 0 },
+    };
+
+    expect(formatEventHumanReadable(warn)).toMatch(/ WARN {2}battle\.defeat/);
+    expect(formatEventHumanReadable(error)).toMatch(/ ERROR trivia\.error/);
+  });
+});
+
+describe('formatEvent', () => {
+  it('defaults to the human-readable format', () => {
+    const event = {
+      type: 'battle.start' as const,
+      level: 'info' as const,
+      ts: '2026-01-01T00:00:00.000Z',
+      data: { characterId: 'char-1', enemyName: 'Bugzoid Grunt', isBoss: false, playerLevel: 1 },
+    };
+
+    expect(formatEvent(event)).toBe(formatEventHumanReadable(event));
+    expect(formatEvent(event, 'json')).toBe(serializeEvent(event));
   });
 });

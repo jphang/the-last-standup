@@ -18,3 +18,33 @@ export function shouldLog(level: LogEvent['level'], threshold: LogEvent['level']
 export function serializeEvent(event: LogEvent): string {
   return JSON.stringify(event);
 }
+
+export type LogFormat = 'json' | 'pretty';
+
+function quoteLogfmtValue(value: string | number | boolean): string {
+  const str = String(value);
+  if (/[\s"=]/.test(str)) return JSON.stringify(str);
+  return str;
+}
+
+function formatData(data: object): string {
+  return Object.entries(data)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${key}=${quoteLogfmtValue(value as string | number | boolean)}`)
+    .join(' ');
+}
+
+export function formatEventHumanReadable(event: LogEvent): string {
+  const parts = [event.ts, event.level.toUpperCase().padEnd(5)];
+  if (event.userId) parts.push(`[${event.userId}]`);
+  parts.push(event.type);
+
+  const data = formatData(event.data);
+  if (data) parts.push(data);
+
+  return parts.join(' ');
+}
+
+export function formatEvent(event: LogEvent, format: LogFormat = 'pretty'): string {
+  return format === 'pretty' ? formatEventHumanReadable(event) : serializeEvent(event);
+}
