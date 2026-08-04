@@ -121,3 +121,60 @@ describe('formatEvent', () => {
     expect(formatEvent(event, 'json')).toBe(serializeEvent(event));
   });
 });
+
+describe('trivia.presented', () => {
+  const event = {
+    type: 'trivia.presented' as const,
+    level: 'debug' as const,
+    ts: '2026-01-01T00:00:00.000Z',
+    userId: 'user-1',
+    data: {
+      category: 'cs' as const,
+      phase: 'attack' as const,
+      question: 'What does HTTP stand for?',
+      correctAnswer: 'HyperText Transfer Protocol',
+      options: ['HyperText Transfer Protocol', 'High Test Transfer Protocol', 'HyperText Transfer Process'],
+    },
+  };
+
+  it('round-trips the full payload through JSON', () => {
+    expect(JSON.parse(serializeEvent(event)).data).toEqual(event.data);
+  });
+
+  it('renders a human-readable line with the question, answer, and options', () => {
+    expect(formatEventHumanReadable(event)).toBe(
+      '2026-01-01T00:00:00.000Z DEBUG [user-1] trivia.presented category=cs phase=attack ' +
+        'question="What does HTTP stand for?" correctAnswer="HyperText Transfer Protocol" ' +
+        'options="HyperText Transfer Protocol,High Test Transfer Protocol,HyperText Transfer Process"'
+    );
+  });
+});
+
+describe('trivia.answer', () => {
+  it('renders correct, non-timed-out answers with the applied multiplier', () => {
+    const event = {
+      type: 'trivia.answer' as const,
+      level: 'debug' as const,
+      ts: '2026-01-01T00:00:00.000Z',
+      userId: 'user-1',
+      data: { category: 'cs' as const, phase: 'attack' as const, correct: true, timedOut: false, multiplier: 2 },
+    };
+
+    expect(formatEventHumanReadable(event)).toBe(
+      '2026-01-01T00:00:00.000Z DEBUG [user-1] trivia.answer category=cs phase=attack correct=true timedOut=false multiplier=2'
+    );
+  });
+
+  it('renders timed-out answers as incorrect with normal damage', () => {
+    const event = {
+      type: 'trivia.answer' as const,
+      level: 'debug' as const,
+      ts: '2026-01-01T00:00:00.000Z',
+      data: { category: 'math' as const, phase: 'defend' as const, correct: false, timedOut: true, multiplier: 1 },
+    };
+
+    expect(formatEventHumanReadable(event)).toBe(
+      '2026-01-01T00:00:00.000Z DEBUG trivia.answer category=math phase=defend correct=false timedOut=true multiplier=1'
+    );
+  });
+});

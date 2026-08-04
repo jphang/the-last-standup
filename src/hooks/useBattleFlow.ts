@@ -260,6 +260,19 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
         const q = await getCSQuestion();
         if (q) {
+            log({
+                type: 'trivia.presented',
+                level: 'debug',
+                ts: new Date().toISOString(),
+                userId: localCharRef.current.user_id,
+                data: {
+                    category: 'cs',
+                    phase: 'attack',
+                    question: q.question,
+                    correctAnswer: q.correct_answer,
+                    options: [...q.incorrect_answers, q.correct_answer],
+                },
+            });
             setBattle((prev) => (prev ? { ...prev, currentQuestion: q, phase: 'trivia_attack' } : null));
             setShowTrivia(true);
             return;
@@ -279,6 +292,19 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
         const q = await getMathQuestion();
         if (q) {
+            log({
+                type: 'trivia.presented',
+                level: 'debug',
+                ts: new Date().toISOString(),
+                userId: localCharRef.current.user_id,
+                data: {
+                    category: 'math',
+                    phase: 'defend',
+                    question: q.question,
+                    correctAnswer: q.correct_answer,
+                    options: [...q.incorrect_answers, q.correct_answer],
+                },
+            });
             setBattle((prev) => (prev ? { ...prev, currentQuestion: q, phase: 'trivia_defend' } : null));
             setShowTrivia(true);
             return;
@@ -317,6 +343,21 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
     const handleTriviaAnswer = useCallback((correct: boolean) => {
         if (!battle) return;
 
+        const isAttack = battle.phase === 'trivia_attack';
+        log({
+            type: 'trivia.answer',
+            level: 'debug',
+            ts: new Date().toISOString(),
+            userId: localCharRef.current.user_id,
+            data: {
+                category: isAttack ? 'cs' : 'math',
+                phase: isAttack ? 'attack' : 'defend',
+                correct,
+                timedOut: false,
+                multiplier: isAttack ? (correct ? 2 : 1) : correct ? 0.5 : 1,
+            },
+        });
+
         if (battle.phase === 'trivia_attack') {
             if (correct) {
                 addLog('Correct! Double damage incoming!');
@@ -339,6 +380,21 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
     const handleTriviaTimeout = useCallback(() => {
         if (!battle) return;
+
+        const isAttack = battle.phase === 'trivia_attack';
+        log({
+            type: 'trivia.answer',
+            level: 'debug',
+            ts: new Date().toISOString(),
+            userId: localCharRef.current.user_id,
+            data: {
+                category: isAttack ? 'cs' : 'math',
+                phase: isAttack ? 'attack' : 'defend',
+                correct: false,
+                timedOut: true,
+                multiplier: 1,
+            },
+        });
 
         addLog("Time's up! Normal damage.");
         if (battle.phase === 'trivia_attack') {

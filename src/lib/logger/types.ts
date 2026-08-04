@@ -85,6 +85,34 @@ export interface TriviaEvent {
   data: { category: 'cs' | 'math'; count: number; responseCode?: number; reason?: string };
 }
 
+export interface TriviaPresentedEvent {
+  type: 'trivia.presented';
+  level: LogLevel;
+  ts: string;
+  userId?: string;
+  data: {
+    category: 'cs' | 'math';
+    phase: 'attack' | 'defend';
+    question: string;
+    correctAnswer: string;
+    options: string[];
+  };
+}
+
+export interface TriviaAnswerEvent {
+  type: 'trivia.answer';
+  level: LogLevel;
+  ts: string;
+  userId?: string;
+  data: {
+    category: 'cs' | 'math';
+    phase: 'attack' | 'defend';
+    correct: boolean;
+    timedOut: boolean;
+    multiplier: number;
+  };
+}
+
 export type LogEvent =
   | AuthLoginSuccessEvent
   | AuthLoginFailureEvent
@@ -95,7 +123,9 @@ export type LogEvent =
   | BattleActionEvent
   | BattleEndEvent
   | BattleLevelUpEvent
-  | TriviaEvent;
+  | TriviaEvent
+  | TriviaPresentedEvent
+  | TriviaAnswerEvent;
 
 export interface LogTransport {
   readonly name: string;
