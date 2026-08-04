@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BattlePhase, BattleState, CharacterClass, PlayerCharacter } from '../types/game';
 import { CHARACTER_CLASSES } from '../types/game';
-import { generateEnemy, isBossEligible } from '../lib/enemies';
+import { isBossEligible } from '../lib/enemies';
 import { calculateExpGain, processLevelUp, getEffectiveStats } from '../lib/gameLogic';
 import { getCSQuestion, getMathQuestion, prefetchQuestions } from '../lib/trivia';
 import { supabase } from '../lib/supabase';
