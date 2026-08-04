@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BattlePhase, BattleState, CharacterClass, PlayerCharacter } from '../types/game';
 import { CHARACTER_CLASSES } from '../types/game';
 import { generateEnemy, isBossEligible } from '../lib/enemies';
-import { calculateDamage, calculateExpGain, processLevelUp, getEffectiveStats } from '../lib/gameLogic';
+import { calculateExpGain, processLevelUp, getEffectiveStats } from '../lib/gameLogic';
 import { getCSQuestion, getMathQuestion, prefetchQuestions } from '../lib/trivia';
 import { supabase } from '../lib/supabase';
 import { useMusic } from '../context/useMusic';
+import { applyEnemyAttack, applyPlayerAttack, createBattleState } from '../lib/battleEngine';
 
 interface UseBattleFlowOptions {
     character: PlayerCharacter;
@@ -44,16 +45,15 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
     const startBattle = useCallback((boss: boolean) => {
         const current = localCharRef.current;
-        const currentStats = getEffectiveStats(current, isPremium);
-        const enemy = generateEnemy(current.level, boss);
+        const nextBattle = createBattleState(current, isPremium, boss);
 
         setBattle({
-            playerHp: currentStats.hp,
-            playerMaxHp: currentStats.hp,
-            enemy,
+            playerHp: nextBattle.playerHp,
+            playerMaxHp: nextBattle.playerMaxHp,
+            enemy: nextBattle.enemy,
             phase: 'player_choose',
             currentQuestion: null,
-            battleLog: [`${enemy.name} appears!`, `"${enemy.description}"`],
+            battleLog: [`${nextBattle.enemy.name} appears!`, `"${nextBattle.enemy.description}"`],
             expGained: 0,
             lastDamage: null,
         });
@@ -152,23 +152,15 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         setAnimating(true);
         setShowTrivia(false);
 
-        const dmg = calculateDamage(stats.attack, battle.enemy.defense, multiplier);
-        const newEnemyHp = Math.max(0, battle.enemy.hp - dmg);
+        const nextBattle = applyPlayerAttack(battle, stats.attack, battle.enemy.defense, multiplier);
+        const dmg = nextBattle.lastDamage?.amount ?? 0;
         const label = multiplier > 1 ? 'CRITICAL Knowledge Strike' : 'Attack';
 
         addLog(`You use ${label}! ${dmg} damage to ${battle.enemy.name}!`);
 
-        setBattle((prev) => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                enemy: { ...prev.enemy, hp: newEnemyHp },
-                lastDamage: { target: 'enemy', amount: dmg },
-                phase: newEnemyHp <= 0 ? 'battle_won' : 'enemy_incoming',
-            };
-        });
+        setBattle(nextBattle);
 
-        if (newEnemyHp <= 0) {
+        if (nextBattle.phase === 'battle_won') {
             handleVictory();
             return;
         }
@@ -185,23 +177,15 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         setAnimating(true);
         setShowTrivia(false);
 
-        const dmg = calculateDamage(battle.enemy.attack, stats.defense, damageMultiplier);
-        const newPlayerHp = Math.max(0, battle.playerHp - dmg);
+        const nextBattle = applyEnemyAttack(battle, battle.enemy.attack, stats.defense, damageMultiplier);
+        const dmg = nextBattle.lastDamage?.amount ?? 0;
         const label = damageMultiplier < 1 ? 'Brain Shield absorbs the blow' : `${battle.enemy.name} attacks`;
 
         addLog(`${label}! ${dmg} damage to you!`);
 
-        setBattle((prev) => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                playerHp: newPlayerHp,
-                lastDamage: { target: 'player', amount: dmg },
-                phase: newPlayerHp <= 0 ? 'battle_lost' : 'player_choose',
-            };
-        });
+        setBattle(nextBattle);
 
-        if (newPlayerHp <= 0) {
+        if (nextBattle.phase === 'battle_lost') {
             handleDefeat();
             return;
         }
