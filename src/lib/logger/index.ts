@@ -13,6 +13,8 @@ export { serializeEvent, shouldLog, toIsoTimestamp } from './formats';
 export { activeLogPath, indexedLogPath, planRotation, shouldRotate } from './rotation';
 export type { RotationOp, RotationPlanOptions } from './rotation';
 export { consoleTransport } from './transports/consoleTransport';
+export { createRemoteTransport } from './transports/remoteTransport';
+export type { RemoteTransportOptions } from './transports/remoteTransport';
 export type { FileTransportOptions } from './transports/fileTransport';
 
 let config: LoggerConfig = {
