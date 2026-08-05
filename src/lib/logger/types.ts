@@ -120,6 +120,27 @@ export interface TriviaAnswerEvent {
   };
 }
 
+export interface PremiumEvent {
+  type:
+    | 'premium.verify'
+    | 'premium.success'
+    | 'premium.error'
+    | 'premium.checkout_started'
+    | 'premium.subscribed'
+    | 'premium.cancelled'
+    | 'premium.reactivated';
+  level: LogLevel;
+  ts: string;
+  userId?: string;
+  data: {
+    isPremium?: boolean;
+    premiumExpiresAt?: string | null;
+    expiresAt?: string | null;
+    renewsAt?: string | null;
+    error?: string;
+  };
+}
+
 export type LogEvent =
   | AuthLoginSuccessEvent
   | AuthLoginFailureEvent
@@ -132,7 +153,8 @@ export type LogEvent =
   | BattleLevelUpEvent
   | TriviaEvent
   | TriviaPresentedEvent
-  | TriviaAnswerEvent;
+  | TriviaAnswerEvent
+  | PremiumEvent;
 
 export interface LogTransport {
   readonly name: string;

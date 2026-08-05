@@ -1,7 +1,8 @@
-import { createContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { log } from '../lib/logger';
+import { verifyPremium } from '../lib/stripe';
 import type { Profile } from '../types/game';
 
 interface AuthContextType {
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const verifiedUserId = useRef<string | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
@@ -37,6 +39,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
+  }, [user, fetchProfile]);
+
+  useEffect(() => {
+    if (!user || verifiedUserId.current === user.id) return;
+    verifiedUserId.current = user.id;
+    let cancelled = false;
+
+    verifyPremium()
+      .then((result) => {
+        if (cancelled) return;
+        if (result.is_premium) {
+          log({
+            type: 'premium.success',
+            level: 'info',
+            ts: new Date().toISOString(),
+            userId: user.id,
+            data: { isPremium: true, premiumExpiresAt: result.premium_expires_at ?? null },
+          });
+          fetchProfile(user.id);
+        } else {
+          log({
+            type: 'premium.verify',
+            level: 'info',
+            ts: new Date().toISOString(),
+            userId: user.id,
+            data: { isPremium: false },
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        log({
+          type: 'premium.error',
+          level: 'error',
+          ts: new Date().toISOString(),
+          userId: user.id,
+          data: { error: err instanceof Error ? err.message : 'Unknown verification error' },
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, fetchProfile]);
 
   useEffect(() => {

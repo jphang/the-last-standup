@@ -92,7 +92,7 @@ Deno.serve(async (req: Request) => {
       });
       const price = await stripe.prices.create({
         product: product.id,
-        unit_amount: 999,
+        unit_amount: 299,
         currency: "usd",
         recurring: { interval: "month" },
         lookup_key: "paying_to_win_monthly",

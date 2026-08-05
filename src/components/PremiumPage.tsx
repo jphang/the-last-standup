@@ -146,7 +146,7 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
         {showResumeConfirm && (
           <ConfirmDialog
             title="Resume Subscription?"
-            message="Your subscription will continue as normal and you'll be charged $9.99/month at the next billing date. Premium perks stay uninterrupted."
+            message="Your subscription will continue as normal and you'll be charged $2.99/month at the next billing date. Premium perks stay uninterrupted."
             confirmLabel="Resume"
             confirmColor="amber"
             loading={reactivating}
@@ -308,7 +308,7 @@ export default function PremiumPage({ onBack }: PremiumPageProps) {
 
         <div className="text-center">
           <div className="mb-4">
-            <span className="text-4xl font-black text-white">$9.99</span>
+            <span className="text-4xl font-black text-white">$2.99</span>
             <span className="text-slate-500 text-sm">/month</span>
           </div>
 

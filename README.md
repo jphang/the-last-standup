@@ -48,7 +48,7 @@ Each class has a unique pixel sprite, and premium overlays apply to all of them 
 - Boss fight unlocks at level 3  
 - Trivia is from [Open Trivia Database](https://opentdb.com/api_config.php)
 
-## "Paying to Win" Premium Tier ($9.99/month via Stripe)
+## "Paying to Win" Premium Tier ($2.99/month via Stripe)
 
 - Triples HP, Attack, and Defense on all characters  
 - Adds a top hat, monocle, and fake mustache to character avatars  
