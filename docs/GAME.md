@@ -1,7 +1,6 @@
 # Game
 
-The "Paying to Win" premium tier and the game itself. This page covers the
-setting, the recruitable agents, and how combat works.
+This page covers the setting, the recruitable agents, and how combat works.
 
 ## Story
 
@@ -40,19 +39,6 @@ Level-up stat growths by class (per level, random within range):
 Each class has a unique pixel sprite, and premium overlays apply to all of them
 automatically through the existing Avatar system.
 
-## Game Features
-
-- Sign in with Google or email/password
-- Create, rename, and manage multiple agents
-- Turn-based battles against 8 alien enemy types plus the final boss
-- **"Knowledge Strike"** — answer a computer-science trivia question for double
-  damage
-- **"Brain Shield"** — answer a math trivia question to halve incoming damage
-- Characters gain EXP, level up, and randomly increase HP/Attack/Defense
-- Boss fight unlocks at level 3
-- Trivia comes from the
-  [Open Trivia Database](https://opentdb.com/api_config.php)
-
 ## Combat
 
 Battles are turn-based. Each turn you can attack or defend; both actions can
@@ -65,9 +51,3 @@ progress at higher levels.
 Eight alien grunt types (Bugzoid Grunt, Scope Creep, The Blocker, Sprint
 Breaker, Legacy Codex, Null Pointer, Deploy Friday, Merge Conflicton) plus the
 final boss, **Dr. Marcus Pivot**.
-
-## Premium Tier ($2.99/month)
-
-- Triples HP, Attack, and Defense on all characters
-- Adds a top hat, monocle, and fake mustache to character avatars
-- Gold "3x STATS" badge on character cards

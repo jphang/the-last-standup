@@ -48,8 +48,7 @@ Environment variables required by the client:
 - Adds a top hat, monocle, and fake mustache to character avatars.
 - Gold "3x STATS" badge on character cards.
 
-Premium is backed by Supabase Edge Functions and Stripe. Full premium perks are
-listed in [docs/GAME.md](docs/GAME.md).
+Premium is backed by Supabase Edge Functions and Stripe.
 
 ## Project Structure
 
