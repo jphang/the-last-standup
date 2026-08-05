@@ -74,7 +74,14 @@ export interface BattleLevelUpEvent {
   level: LogLevel;
   ts: string;
   userId?: string;
-  data: { characterId: string; newLevel: number; levelsGained: number };
+  data: {
+    characterId: string;
+    newLevel: number;
+    levelsGained: number;
+    hpGain: number;
+    attackGain: number;
+    defenseGain: number;
+  };
 }
 
 export interface TriviaEvent {

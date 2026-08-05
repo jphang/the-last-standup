@@ -110,6 +110,9 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
                     characterId: localChar.id,
                     newLevel: result.newLevel,
                     levelsGained: result.levelsGained,
+                    hpGain: result.hpGain,
+                    attackGain: result.attackGain,
+                    defenseGain: result.defenseGain,
                 },
             });
             addLog(`LEVEL UP! Now level ${result.newLevel}!`);
