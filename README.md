@@ -1,56 +1,68 @@
-### The Last Standup
+# The Last Standup
 
 Something I built to get a feel of vibe coding.
 
-Technologies used: Bolt.new (initially), React, TypeScript, Vite, Tailwind CSS, Supabase, Stripe
+A turn-based alien-battle game. Recruit a squad of software-industry agents,
+fight aliens by answering trivia questions, and level up as you go. Defeat the
+final boss, Dr. Marcus Pivot — the rogue former CTO who commands the alien
+invasion from his standing desk.
 
-## Story
-A rogue former CTO named Dr. Marcus Pivot got tired of pivoting the company every sprint. He made contact with aliens and now commands their invasion from a modified standing desk using a Kanban board of doom.
+For the story, characters, and combat details see [docs/GAME.md](docs/GAME.md).
 
-## Characters
+## Tech Stack
 
-- **Chad Thunderpitch (CEO)** -- balanced fighter with motivational speeches  
-- **Kay "K8s" Kubernetes (DevOps)** -- high defense, containerizes alien threats  
-- **Devin Overflow (Full-Stack Dev)** -- high attack, copy-pastes from Stack Overflow  
-- **Pixel McFigma (UX Designer)** -- tanky, makes aliens question their life choices  
-- **Bug Buster Betty (QA Tester)** -- strong attacker, finds bugs in the invasion plan  
-- **Patience "Ping" Patterson (Support Engineer)** -- tanky with good defense, decent HP. Weaponizes the thousand-yard customer service stare.  
-- **Jira "Blocker" Jenkins (Product Manager)** -- Balanced all-around stats. Defeats aliens by scheduling them into back-to-back meetings.  
-- **Gary "Always Closing" Grimes (Sales Representative)** -- Glass cannon -- highest attack potential but paper-thin defense. Tries to sell SaaS subscriptions mid-combat.  
-- **Linda "Culture Fit" Liu (Recruiter/HR)** -- The ultimate tank -- highest HP and defense growths but barely any attack. Weaponizes rejection emails.  
-- **Timmy "No-Salary" (The Intern)** -- works for experience, including combat experience  
+Built with React, TypeScript, Vite, Tailwind CSS, Supabase, and Stripe.
 
-Level-up stat growths by class (per level, random within range):
+## Quick Start
 
-| Class       | HP   | ATK   | DEF   | Identity            |
-|-------------|------|-------|-------|---------------------|
-| CEO         | 1-4  | 1-3   | 0-3   | Strong leader       |
-| Full-Stack  | 0-3  | 2-4   | 0-2   | Glass cannon        |
-| DevOps      | 1-3  | 0-2   | 2-4   | Defensive           |
-| Designer    | 1-4  | 1-3   | 1-3   | Balanced            |
-| QA          | 0-3  | 1-4   | 0-3   | Offense-leaning     |
-| Support     | 1-4  | 0-2   | 1-4   | Defensive tank      |
-| PM          | 1-3  | 1-3   | 1-3   | Jack of all trades  |
-| Sales       | 0-2  | 2-5   | 0-1   | Max offense, fragile|
-| Recruiter   | 2-4  | 0-1   | 2-4   | Pure tank           |
-| Intern      | 0-2  | 0-2   | 0-2   | Lowest growths      |
+```bash
+npm install
+cp .env.example .env   # fill in your Supabase URL and anon key
+npm run dev
+```
 
-Each class has a unique pixel sprite, and premium overlays apply to all of them automatically through the existing Avatar system.
+Environment variables required by the client:
+
+| Variable | Purpose |
+| -------- | ------- |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public API key |
 
 ## Game Features
 
-- Sign in with Google or email/password  
-- Create, rename, and manage multiple agents  
-- Turn-based battles against 8 alien enemy types plus the final boss  
-- **"Knowledge Strike"** -- answer a computer science trivia question for double damage  
-- **"Brain Shield"** -- answer a math trivia question to halve incoming damage  
-- Characters gain EXP, level up, and randomly increase HP/Attack/Defense  
-- Boss fight unlocks at level 3  
-- Trivia is from [Open Trivia Database](https://opentdb.com/api_config.php)
+- **Sign in** with Google or email/password, with a password-reset flow.
+- **10 recruit-able agent classes**, each with a unique pixel sprite and its own
+  stat-growth profile (see [docs/GAME.md](docs/GAME.md)).
+- **Turn-based battles** against 8 alien enemy types plus the final boss.
+- **"Knowledge Strike"** — answer a computer-science trivia question for
+  double damage.
+- **"Brain Shield"** — answer a math trivia question to halve incoming damage.
+- **EXP and leveling** — characters gain EXP, level up, and grow HP/Attack/Defense
+  within their class's range.
+- **Boss fight** unlockable at level 3.
+- **Trivia** sourced from the [Open Trivia Database](https://opentdb.com/api_config.php).
 
-## "Paying to Win" Premium Tier ($2.99/month via Stripe)
+## Premium Tier ($2.99/month via Stripe)
 
-- Triples HP, Attack, and Defense on all characters  
-- Adds a top hat, monocle, and fake mustache to character avatars  
-- Gold "3x STATS" badge on character cards  
-- Two Stripe edge functions deployed (checkout + webhook) to handle subscriptions  
+- Triples HP, Attack, and Defense on all characters.
+- Adds a top hat, monocle, and fake mustache to character avatars.
+- Gold "3x STATS" badge on character cards.
+
+Premium is backed by Supabase Edge Functions and Stripe. Full premium perks are
+listed in [docs/GAME.md](docs/GAME.md).
+
+## Project Structure
+
+```
+src/
+  components/   # UI: battle, character, sprites, premium, auth screens
+  context/      # Auth + Music contexts
+  hooks/        # useBattleFlow
+  lib/          # battle engine, game logic, enemies, trivia, audio, logger, stripe
+  pages/        # Auth, Game, ResetPassword
+  types/        # shared types + character data
+supabase/
+  functions/    # stripe edge functions (checkout, verify, webhook, cancel, reactivate)
+  migrations/   # database schema
+tests/          # Vitest unit tests
+```
