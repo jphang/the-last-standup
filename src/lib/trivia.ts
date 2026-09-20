@@ -1,10 +1,16 @@
 import type { TriviaQuestion } from '../types/game';
 import { log } from './logger';
 
-const csQuestions: TriviaQuestion[] = [];
-const mathQuestions: TriviaQuestion[] = [];
-let csFetching = false;
-let mathFetching = false;
+interface CategoryState {
+  categoryId: number;
+  queue: TriviaQuestion[];
+  fetching: boolean;
+}
+
+const categories: Record<'cs' | 'math', CategoryState> = {
+  cs: { categoryId: 18, queue: [], fetching: false },
+  math: { categoryId: 19, queue: [], fetching: false },
+};
 
 function categoryLabel(category: number): 'cs' | 'math' {
   return category === 18 ? 'cs' : 'math';
@@ -60,33 +66,29 @@ async function fetchQuestions(category: number): Promise<TriviaQuestion[]> {
   }
 }
 
-async function ensureCSQuestions(): Promise<void> {
-  if (csQuestions.length > 2 || csFetching) return;
-  csFetching = true;
-  const fresh = await fetchQuestions(18);
-  csQuestions.push(...fresh);
-  csFetching = false;
+async function ensureQuestions(key: 'cs' | 'math'): Promise<void> {
+  const state = categories[key];
+  if (state.queue.length > 2 || state.fetching) return;
+  state.fetching = true;
+  const fresh = await fetchQuestions(state.categoryId);
+  state.queue.push(...fresh);
+  state.fetching = false;
 }
 
-async function ensureMathQuestions(): Promise<void> {
-  if (mathQuestions.length > 2 || mathFetching) return;
-  mathFetching = true;
-  const fresh = await fetchQuestions(19);
-  mathQuestions.push(...fresh);
-  mathFetching = false;
+async function getQuestion(key: 'cs' | 'math'): Promise<TriviaQuestion | null> {
+  await ensureQuestions(key);
+  return categories[key].queue.pop() ?? null;
 }
 
 export async function getCSQuestion(): Promise<TriviaQuestion | null> {
-  await ensureCSQuestions();
-  return csQuestions.pop() ?? null;
+  return getQuestion('cs');
 }
 
 export async function getMathQuestion(): Promise<TriviaQuestion | null> {
-  await ensureMathQuestions();
-  return mathQuestions.pop() ?? null;
+  return getQuestion('math');
 }
 
 export function prefetchQuestions(): void {
-  ensureCSQuestions();
-  ensureMathQuestions();
+  ensureQuestions('cs');
+  ensureQuestions('math');
 }
