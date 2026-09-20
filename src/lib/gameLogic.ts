@@ -27,6 +27,18 @@ export function calculateDamage(
   return Math.max(1, Math.floor(raw * multiplier));
 }
 
+// Trivia-driven damage multipliers: how a right/wrong trivia answer affects combat damage.
+export const CRITICAL_DAMAGE_MULTIPLIER = 2;   // correct answer while attacking -> double damage
+export const SHIELD_DAMAGE_MULTIPLIER = 0.5;   // correct answer while defending -> half damage taken
+export const NORMAL_DAMAGE_MULTIPLIER = 1;     // wrong answer or timeout -> no bonus, no penalty
+
+export function getTriviaDamageMultiplier(isAttack: boolean, correct: boolean): number {
+  if (isAttack) {
+    return correct ? CRITICAL_DAMAGE_MULTIPLIER : NORMAL_DAMAGE_MULTIPLIER;
+  }
+  return correct ? SHIELD_DAMAGE_MULTIPLIER : NORMAL_DAMAGE_MULTIPLIER;
+}
+
 export function calculateExpGain(playerLevel: number, enemyLevel: number, isBoss: boolean): number {
   const base = 15 + enemyLevel * 3;
   const levelDiff = enemyLevel - playerLevel;

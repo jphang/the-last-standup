@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BattlePhase, BattleState, CharacterClass, PlayerCharacter } from '../types/game';
 import { CHARACTER_CLASSES } from '../types/game';
 import { isBossEligible } from '../lib/enemies';
-import { calculateExpGain, processLevelUp, getEffectiveStats } from '../lib/gameLogic';
+import { calculateExpGain, processLevelUp, getEffectiveStats, getTriviaDamageMultiplier } from '../lib/gameLogic';
 import { getCSQuestion, getMathQuestion, prefetchQuestions } from '../lib/trivia';
 import { supabase } from '../lib/supabase';
 import { useMusic } from '../context/useMusic';
@@ -347,6 +347,8 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         if (!battle) return;
 
         const isAttack = battle.phase === 'trivia_attack';
+        const multiplier = getTriviaDamageMultiplier(isAttack, correct);
+
         log({
             type: 'trivia.answer',
             level: 'debug',
@@ -357,34 +359,26 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
                 phase: isAttack ? 'attack' : 'defend',
                 correct,
                 timedOut: false,
-                multiplier: isAttack ? (correct ? 2 : 1) : correct ? 0.5 : 1,
+                multiplier,
             },
         });
 
-        if (battle.phase === 'trivia_attack') {
-            if (correct) {
-                addLog('Correct! Double damage incoming!');
-                executePlayerAttack(2);
-            } else {
-                addLog('Wrong answer. Normal attack.');
-                executePlayerAttack(1);
-            }
+        if (isAttack) {
+            addLog(correct ? 'Correct! Double damage incoming!' : 'Wrong answer. Normal attack.');
+            executePlayerAttack(multiplier);
             return;
         }
 
-        if (correct) {
-            addLog('Correct! Damage halved!');
-            executeEnemyAttack(0.5);
-        } else {
-            addLog('Wrong answer. Full damage incoming.');
-            executeEnemyAttack(1);
-        }
+        addLog(correct ? 'Correct! Damage halved!' : 'Wrong answer. Full damage incoming.');
+        executeEnemyAttack(multiplier);
     }, [addLog, battle, executeEnemyAttack, executePlayerAttack]);
 
     const handleTriviaTimeout = useCallback(() => {
         if (!battle) return;
 
         const isAttack = battle.phase === 'trivia_attack';
+        const multiplier = getTriviaDamageMultiplier(isAttack, false);
+
         log({
             type: 'trivia.answer',
             level: 'debug',
@@ -395,15 +389,15 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
                 phase: isAttack ? 'attack' : 'defend',
                 correct: false,
                 timedOut: true,
-                multiplier: 1,
+                multiplier,
             },
         });
 
         addLog("Time's up! Normal damage.");
-        if (battle.phase === 'trivia_attack') {
-            executePlayerAttack(1);
+        if (isAttack) {
+            executePlayerAttack(multiplier);
         } else {
-            executeEnemyAttack(1);
+            executeEnemyAttack(multiplier);
         }
     }, [addLog, battle, executeEnemyAttack, executePlayerAttack]);
 

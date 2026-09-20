@@ -5,6 +5,7 @@ import {
   calculateDamage,
   calculateExpGain,
   getEffectiveStats,
+  getTriviaDamageMultiplier,
   processLevelUp,
 } from '../src/lib/gameLogic';
 
@@ -53,6 +54,24 @@ describe('calculateDamage', () => {
   it('never deals less than 1 damage', () => {
     expect(calculateDamage(0, 100)).toBe(1);
     expect(calculateDamage(5, 100)).toBe(1);
+  });
+});
+
+describe('getTriviaDamageMultiplier', () => {
+  it('returns double damage for a correct attack answer', () => {
+    expect(getTriviaDamageMultiplier(true, true)).toBe(2);
+  });
+
+  it('returns normal damage for a wrong attack answer', () => {
+    expect(getTriviaDamageMultiplier(true, false)).toBe(1);
+  });
+
+  it('returns halved damage for a correct defend answer', () => {
+    expect(getTriviaDamageMultiplier(false, true)).toBe(0.5);
+  });
+
+  it('returns normal damage for a wrong defend answer', () => {
+    expect(getTriviaDamageMultiplier(false, false)).toBe(1);
   });
 });
 
