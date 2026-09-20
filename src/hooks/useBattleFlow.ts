@@ -8,10 +8,18 @@ import { supabase } from '../lib/supabase';
 import { useMusic } from '../context/useMusic';
 import { applyEnemyAttack, applyPlayerAttack, createBattleState } from '../lib/battleEngine';
 import { log } from '../lib/logger';
+import type { LogEvent } from '../lib/logger';
 
 interface UseBattleFlowOptions {
     character: PlayerCharacter;
     isPremium: boolean;
+}
+
+type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
+type BattleLogEvent = DistributiveOmit<LogEvent, 'ts'>;
+
+function logBattleEvent(event: BattleLogEvent): void {
+    log({ ...event, ts: new Date().toISOString() } as LogEvent);
 }
 
 export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
@@ -67,10 +75,9 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         prefetchQuestions();
         play(boss ? 'battle_boss' : 'battle_alien');
 
-        log({
+        logBattleEvent({
             type: 'battle.start',
             level: 'info',
-            ts: new Date().toISOString(),
             userId: current.user_id,
             data: {
                 characterId: current.id,
@@ -94,20 +101,22 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         const exp = calculateExpGain(localChar.level, battle.enemy.level, battle.enemy.isBoss);
         const result = processLevelUp(localChar, exp);
 
-        log({
+        logBattleEvent({
             type: 'battle.victory',
             level: 'info',
-            ts: new Date().toISOString(),
             userId: localChar.user_id,
-            data: { enemyName: battle.enemy.name, isBoss: battle.enemy.isBoss, expGained: exp },
+            data: {
+                enemyName: battle.enemy.name,
+                isBoss: battle.enemy.isBoss,
+                expGained: exp,
+            },
         });
 
         addLog(`Victory! Gained ${exp} EXP!`);
         if (result.levelsGained > 0) {
-            log({
+            logBattleEvent({
                 type: 'battle.level_up',
                 level: 'info',
-                ts: new Date().toISOString(),
                 userId: localChar.user_id,
                 data: {
                     characterId: localChar.id,
@@ -171,12 +180,14 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         play('defeat');
         addLog('You have been defeated...');
 
-        log({
+        logBattleEvent({
             type: 'battle.defeat',
             level: 'info',
-            ts: new Date().toISOString(),
             userId: localChar.user_id,
-            data: { enemyName: battle.enemy.name, isBoss: battle.enemy.isBoss },
+            data: {
+                enemyName: battle.enemy.name,
+                isBoss: battle.enemy.isBoss,
+            },
         });
 
         const updatedChar = { ...localChar, battles_lost: localChar.battles_lost + 1 };
@@ -203,12 +214,14 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         const dmg = nextBattle.lastDamage?.amount ?? 0;
         const label = multiplier > 1 ? 'CRITICAL Knowledge Strike' : 'Attack';
 
-        log({
+        logBattleEvent({
             type: 'battle.player_attack',
             level: 'debug',
-            ts: new Date().toISOString(),
             userId: localCharRef.current.user_id,
-            data: { damage: dmg, targetHp: nextBattle.enemy.hp },
+            data: {
+                damage: dmg,
+                targetHp: nextBattle.enemy.hp,
+            },
         });
 
         addLog(`You use ${label}! ${dmg} damage to ${battle.enemy.name}!`);
@@ -236,12 +249,14 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         const dmg = nextBattle.lastDamage?.amount ?? 0;
         const label = damageMultiplier < 1 ? 'Brain Shield absorbs the blow' : `${battle.enemy.name} attacks`;
 
-        log({
+        logBattleEvent({
             type: 'battle.enemy_attack',
             level: 'debug',
-            ts: new Date().toISOString(),
             userId: localCharRef.current.user_id,
-            data: { damage: dmg, targetHp: nextBattle.playerHp },
+            data: {
+                damage: dmg,
+                targetHp: nextBattle.playerHp,
+            },
         });
 
         addLog(`${label}! ${dmg} damage to you!`);
@@ -266,10 +281,9 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
         const q = await getCSQuestion();
         if (q) {
-            log({
+            logBattleEvent({
                 type: 'trivia.presented',
                 level: 'debug',
-                ts: new Date().toISOString(),
                 userId: localCharRef.current.user_id,
                 data: {
                     category: 'cs',
@@ -298,10 +312,9 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
         const q = await getMathQuestion();
         if (q) {
-            log({
+            logBattleEvent({
                 type: 'trivia.presented',
                 level: 'debug',
-                ts: new Date().toISOString(),
                 userId: localCharRef.current.user_id,
                 data: {
                     category: 'math',
@@ -352,10 +365,9 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         const isAttack = battle.phase === 'trivia_attack';
         const multiplier = getTriviaDamageMultiplier(isAttack, correct);
 
-        log({
+        logBattleEvent({
             type: 'trivia.answer',
             level: 'debug',
-            ts: new Date().toISOString(),
             userId: localCharRef.current.user_id,
             data: {
                 category: isAttack ? 'cs' : 'math',
@@ -382,10 +394,9 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         const isAttack = battle.phase === 'trivia_attack';
         const multiplier = getTriviaDamageMultiplier(isAttack, false);
 
-        log({
+        logBattleEvent({
             type: 'trivia.answer',
             level: 'debug',
-            ts: new Date().toISOString(),
             userId: localCharRef.current.user_id,
             data: {
                 category: isAttack ? 'cs' : 'math',
