@@ -1,18 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14";
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { handlePreflight, jsonHeaders } from "../_shared/cors.ts";
+import { createServiceRoleClient, requireAuthenticatedUser } from "../_shared/auth.ts";
+import { errorResponse } from "../_shared/errors.ts";
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
 
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -21,34 +15,16 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Stripe is not configured" }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: jsonHeaders,
         }
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createServiceRoleClient();
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const authResult = await requireAuthenticatedUser(req, supabase);
+    if (authResult instanceof Response) return authResult;
+    const { user } = authResult;
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -61,7 +37,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "No active subscription found" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: jsonHeaders,
         }
       );
     }
@@ -79,7 +55,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "No active subscription found" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: jsonHeaders,
         }
       );
     }
@@ -105,15 +81,10 @@ Deno.serve(async (req: Request) => {
         ).toISOString(),
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders,
       }
     );
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "An unknown error occurred";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse(error);
   }
 });
