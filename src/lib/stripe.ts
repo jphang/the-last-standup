@@ -1,25 +1,32 @@
 import { supabase } from './supabase';
 import { log } from './logger';
 
+async function callFunction(
+  name: string,
+  accessToken: string,
+  options: { method?: string; body?: unknown } = {}
+): Promise<Response> {
+  return fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`, {
+    method: options.method ?? 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+    },
+    ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
+  });
+}
+
 export async function startCheckout() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('User must be authenticated');
 
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-      },
-      body: JSON.stringify({
-        successUrl: `${window.location.origin}?premium=success`,
-        cancelUrl: `${window.location.origin}?premium=cancel`,
-      }),
-    }
-  );
+  const res = await callFunction('stripe-checkout', session.access_token, {
+    body: {
+      successUrl: `${window.location.origin}?premium=success`,
+      cancelUrl: `${window.location.origin}?premium=cancel`,
+    },
+  });
 
   if (!res.ok) {
     const data = await res.json().catch(() => null);
@@ -57,17 +64,7 @@ export async function verifyPremium(): Promise<{
 
   const session = data.session;
 
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-verify`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-      },
-    }
-  ).catch(() => null);
+  const res = await callFunction('stripe-verify', session.access_token).catch(() => null);
 
   if (!res) {
     log({
@@ -103,17 +100,7 @@ export async function cancelSubscription(): Promise<{
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('User must be authenticated');
 
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-cancel`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-      },
-    }
-  );
+  const res = await callFunction('stripe-cancel', session.access_token);
 
   if (!res.ok) {
     const data = await res.json().catch(() => null);
@@ -149,17 +136,7 @@ export async function reactivateSubscription(): Promise<{
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('User must be authenticated');
 
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-reactivate`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-      },
-    }
-  );
+  const res = await callFunction('stripe-reactivate', session.access_token);
 
   if (!res.ok) {
     const data = await res.json().catch(() => null);
