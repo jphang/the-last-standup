@@ -31,7 +31,7 @@ Environment variables required by the client:
 ## Game Features
 
 - **Sign in** with Google or email/password, with a password-reset flow.
-- **10 recruit-able agent classes**, each with a unique pixel sprite and its own
+- **10 recruitable agent classes**, each with a unique pixel sprite and its own
   stat-growth profile (see [docs/GAME.md](docs/GAME.md)).
 - **Turn-based battles** against 8 alien enemy types plus the final boss.
 - **"Knowledge Strike"** — answer a computer-science trivia question for
