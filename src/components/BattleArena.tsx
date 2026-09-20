@@ -17,7 +17,6 @@ interface BattleArenaProps {
 export default function BattleArena({ character, isPremium, onExit }: BattleArenaProps) {
   const {
     localChar,
-    stats,
     battle,
     showTrivia,
     levelUpInfo,
@@ -166,8 +165,8 @@ export default function BattleArena({ character, isPremium, onExit }: BattleAren
                 </p>
               </div>
               <div className="flex items-center gap-1 text-slate-500 text-[10px]">
-                <Zap className="w-3 h-3 text-amber-400" />{stats.attack}
-                <Shield className="w-3 h-3 text-cyan-400 ml-1" />{stats.defense}
+                <Zap className="w-3 h-3 text-amber-400" />{battle.attack}
+                <Shield className="w-3 h-3 text-cyan-400 ml-1" />{battle.defense}
               </div>
             </div>
             <HealthBar current={battle.playerHp} max={battle.playerMaxHp} label="HP" colorClass="bg-emerald-500" />

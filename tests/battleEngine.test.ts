@@ -43,6 +43,8 @@ function makeBattleState(overrides: Partial<BattleState> = {}): BattleState {
   return {
     playerHp: 100,
     playerMaxHp: 100,
+    attack: 12,
+    defense: 8,
     enemy: makeEnemy(),
     phase: 'player_choose',
     currentQuestion: null,
@@ -70,6 +72,17 @@ describe('createBattleState', () => {
     const state = createBattleState(makeCharacter(), true, false);
     expect(state.playerHp).toBe(150);
     expect(state.playerMaxHp).toBe(150);
+  });
+
+  it('freezes tripled attack and defense into the returned battle state', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const free = createBattleState(makeCharacter(), false, false);
+    const premium = createBattleState(makeCharacter(), true, false);
+
+    expect(free.attack).toBe(12);
+    expect(free.defense).toBe(8);
+    expect(premium.attack).toBe(36);
+    expect(premium.defense).toBe(24);
   });
 
   it('generates a boss enemy when requested', () => {

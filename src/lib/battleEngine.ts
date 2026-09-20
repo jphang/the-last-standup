@@ -6,13 +6,15 @@ export function createBattleState(
   character: PlayerCharacter,
   isPremium: boolean,
   boss: boolean,
-): Pick<BattleState, 'playerHp' | 'playerMaxHp' | 'enemy'> {
+): Pick<BattleState, 'playerHp' | 'playerMaxHp' | 'attack' | 'defense' | 'enemy'> {
   const stats = getEffectiveStats(character, isPremium);
   const enemy = generateEnemy(character.level, boss);
 
   return {
     playerHp: stats.hp,
     playerMaxHp: stats.hp,
+    attack: stats.attack,
+    defense: stats.defense,
     enemy,
   };
 }

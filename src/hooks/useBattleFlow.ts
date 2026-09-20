@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BattlePhase, BattleState, CharacterClass, PlayerCharacter } from '../types/game';
 import { CHARACTER_CLASSES } from '../types/game';
 import { isBossEligible } from '../lib/enemies';
-import { calculateExpGain, processLevelUp, getEffectiveStats, getTriviaDamageMultiplier } from '../lib/gameLogic';
+import { calculateExpGain, processLevelUp, getTriviaDamageMultiplier } from '../lib/gameLogic';
 import { getCSQuestion, getMathQuestion, prefetchQuestions } from '../lib/trivia';
 import { supabase } from '../lib/supabase';
 import { useMusic } from '../context/useMusic';
@@ -17,7 +17,6 @@ interface UseBattleFlowOptions {
 export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
     const { play } = useMusic();
     const [localChar, setLocalChar] = useState<PlayerCharacter>({ ...character });
-    const stats = getEffectiveStats(localChar, isPremium);
     const [battle, setBattle] = useState<BattleState | null>(null);
     const [showTrivia, setShowTrivia] = useState(false);
     const [animating, setAnimating] = useState(false);
@@ -33,8 +32,10 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
     const [showBossVictory, setShowBossVictory] = useState(false);
     const logRef = useRef<HTMLDivElement>(null);
     const localCharRef = useRef(localChar);
+    const isPremiumRef = useRef(isPremium);
 
     localCharRef.current = localChar;
+    isPremiumRef.current = isPremium;
 
     const addLog = useCallback((msg: string) => {
         setBattle((prev) => (prev ? { ...prev, battleLog: [...prev.battleLog, msg] } : null));
@@ -46,11 +47,13 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
     const startBattle = useCallback((boss: boolean) => {
         const current = localCharRef.current;
-        const nextBattle = createBattleState(current, isPremium, boss);
+        const nextBattle = createBattleState(current, isPremiumRef.current, boss);
 
         setBattle({
             playerHp: nextBattle.playerHp,
             playerMaxHp: nextBattle.playerMaxHp,
+            attack: nextBattle.attack,
+            defense: nextBattle.defense,
             enemy: nextBattle.enemy,
             phase: 'player_choose',
             currentQuestion: null,
@@ -76,7 +79,7 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
                 playerLevel: current.level,
             },
         });
-    }, [isPremium, play]);
+    }, [play]);
 
     const beginBattle = useCallback((boss: boolean) => {
         setChoosing(false);
@@ -196,7 +199,7 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         setAnimating(true);
         setShowTrivia(false);
 
-        const nextBattle = applyPlayerAttack(battle, stats.attack, battle.enemy.defense, multiplier);
+        const nextBattle = applyPlayerAttack(battle, battle.attack, battle.enemy.defense, multiplier);
         const dmg = nextBattle.lastDamage?.amount ?? 0;
         const label = multiplier > 1 ? 'CRITICAL Knowledge Strike' : 'Attack';
 
@@ -221,7 +224,7 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
             setAnimating(false);
             setPhase('enemy_incoming');
         }, 800);
-    }, [addLog, battle, handleVictory, setPhase, stats.attack]);
+    }, [addLog, battle, handleVictory, setPhase]);
 
     const executeEnemyAttack = useCallback((damageMultiplier: number) => {
         if (!battle) return;
@@ -229,7 +232,7 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         setAnimating(true);
         setShowTrivia(false);
 
-        const nextBattle = applyEnemyAttack(battle, battle.enemy.attack, stats.defense, damageMultiplier);
+        const nextBattle = applyEnemyAttack(battle, battle.enemy.attack, battle.defense, damageMultiplier);
         const dmg = nextBattle.lastDamage?.amount ?? 0;
         const label = damageMultiplier < 1 ? 'Brain Shield absorbs the blow' : `${battle.enemy.name} attacks`;
 
@@ -251,7 +254,7 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
         }
 
         setTimeout(() => setAnimating(false), 800);
-    }, [addLog, battle, handleDefeat, stats.defense]);
+    }, [addLog, battle, handleDefeat]);
 
     const handleAttack = useCallback(async () => {
         if (!battle || animating) return;
@@ -405,7 +408,6 @@ export function useBattleFlow({ character, isPremium }: UseBattleFlowOptions) {
 
     return {
         localChar,
-        stats,
         battle,
         showTrivia,
         levelUpInfo,

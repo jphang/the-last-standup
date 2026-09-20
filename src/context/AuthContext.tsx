@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) fetchProfile(s.user.id);
+      if (s?.user) await fetchProfile(s.user.id);
       setLoading(false);
     });
 
@@ -109,11 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         (async () => {
           await fetchProfile(s.user.id);
+          setLoading(false);
         })();
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

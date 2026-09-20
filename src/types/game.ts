@@ -67,6 +67,8 @@ export type BattlePhase =
 export interface BattleState {
   playerHp: number;
   playerMaxHp: number;
+  attack: number;
+  defense: number;
   enemy: AlienEnemy;
   phase: BattlePhase;
   currentQuestion: TriviaQuestion | null;
