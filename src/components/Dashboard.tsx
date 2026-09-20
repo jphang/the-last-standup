@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Skull, Users, Crown, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Plus, Skull, Users, Crown, AlertTriangle, Trophy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { log } from '../lib/logger';
 import { useAuth } from '../context/useAuth';
@@ -17,6 +17,7 @@ export default function Dashboard({ onNavigate, onSelectCharacter, onEditCharact
   const [characters, setCharacters] = useState<PlayerCharacter[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'newest' | 'level' | 'wins' | 'name'>('newest');
 
   const isPremium = profile?.is_premium && (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
 
@@ -47,6 +48,28 @@ export default function Dashboard({ onNavigate, onSelectCharacter, onEditCharact
     setDeleteTarget(null);
     fetchCharacters();
   };
+
+  const totalWins = characters.reduce((sum, c) => sum + c.battles_won, 0);
+  const totalLosses = characters.reduce((sum, c) => sum + c.battles_lost, 0);
+  const totalBattles = totalWins + totalLosses;
+  const winRate = totalBattles > 0 ? Math.round((totalWins / totalBattles) * 100) : null;
+
+  const sortedCharacters = useMemo(() => {
+    if (sortBy === 'newest') return characters;
+    const sorted = [...characters];
+    switch (sortBy) {
+      case 'level':
+        sorted.sort((a, b) => b.level - a.level);
+        break;
+      case 'wins':
+        sorted.sort((a, b) => b.battles_won - a.battles_won);
+        break;
+      case 'name':
+        sorted.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+    return sorted;
+  }, [characters, sortBy]);
 
   return (
     <div className="max-w-6xl mx-auto p-4 pb-20">
@@ -95,11 +118,19 @@ export default function Dashboard({ onNavigate, onSelectCharacter, onEditCharact
         </button>
       )}
 
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <div className="flex items-center gap-2 bg-slate-800/50 rounded-xl px-4 py-2 border border-slate-700/50">
           <Users className="w-4 h-4 text-slate-500" />
           <span className="text-slate-300 text-sm font-medium">{characters.length} Agent{characters.length !== 1 ? 's' : ''}</span>
         </div>
+        {totalBattles > 0 && (
+          <div className="flex items-center gap-2 bg-emerald-500/10 rounded-xl px-4 py-2 border border-emerald-500/20">
+            <Trophy className="w-4 h-4 text-emerald-400" />
+            <span className="text-emerald-400 text-sm font-medium">
+              {totalWins}W / {totalLosses}L ({winRate}% Win Rate)
+            </span>
+          </div>
+        )}
         {(() => {
           const totalBossKOs = characters.reduce((sum, c) => sum + (c.boss_defeats || 0), 0);
           return totalBossKOs > 0 ? (
@@ -116,6 +147,24 @@ export default function Dashboard({ onNavigate, onSelectCharacter, onEditCharact
             </div>
           );
         })()}
+        {characters.length > 1 && (
+          <div className="flex items-center gap-2 ml-auto">
+            <label htmlFor="character-sort" className="text-slate-500 text-xs">
+              Sort
+            </label>
+            <select
+              id="character-sort"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 text-slate-300 text-sm focus:outline-none focus:border-emerald-500/50"
+            >
+              <option value="newest">Newest</option>
+              <option value="level">Highest Level</option>
+              <option value="wins">Most Wins</option>
+              <option value="name">Name (A-Z)</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -137,7 +186,7 @@ export default function Dashboard({ onNavigate, onSelectCharacter, onEditCharact
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {characters.map((c) => (
+          {sortedCharacters.map((c) => (
             <div key={c.id} className="relative">
               <CharacterCard
                 character={c}
